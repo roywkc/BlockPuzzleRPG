@@ -14,38 +14,10 @@
   <body ng-keydown="keyPress($event)" ng-swipe-left="moveBlock('left')" ng-swipe-right="moveBlock('right')" >
   <div class="container">
     <div class="row">
-      <div ng-hide="gameLoop || game.isPaused" class="col-xs-3">
-        <button ng-click="startGame()" 
-                style="width:160px;text-align:center; margin-top:200px; background-color:green">
-          Start!
-        </button>
-      </div>
-      <div ng-show="game.isPaused" class="col-xs-3" style="width:250px;height:500px;padding-top:200px;text-align:center;background-color:blue;margin-right:20px">
-          PAUSED
-      </div>
-      <div class="col-xs-8" style="width:300px"  ng-show="gameLoop && !game.isPaused">
-        <div class="row" ng-repeat="row in game.board track by $index" >
-          <div class="col-xs-1" ng-repeat="cell in row track by $index" 
-               style="padding:0px;border-style:solid;border-color:black;height:25px;width:25px">
-            <div  style="background-color:red;height:inherit;width:inherit" ng-show="isCellFull($index, $parent.$index)"></div>
-            <div  style="background-color:blue;height:inherit;width:inherit" ng-hide="isCellFull($index, $parent.$index)"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xs-4">
+      <div class="col-xs-3">
         <h2> Level: {{game.level}} </h2>
         <h2> Score: {{game.score}} </h2>
         <div class="row">
-          <div class="col-xs-12" style="margin-left:15px;">
-            <div class="row"  ng-repeat="row in game.savedBlock.grid track by $index">
-              <div class="col-xs-3" ng-repeat="cell in row track by $index" 
-                    style="padding:0px;width:25px;height:25px;border-style:solid;border-color:black">
-                <div style="background-color:red;height:inherit;width:inherit;" ng-show="cell"></div>
-                <div style="background-color:blue;height:inherit;width:inherit;" ng-hide="cell"></div>
-              </div>
-            </div>
-          </div>
           <span class="col-xs-12" 
                 style="margin-left:15px;margin-top:20px;border-style:solid;border-color:black;background-color:grey;width:230px">
             <div>
@@ -78,11 +50,56 @@
             <button ng-click="decreaseLevel()">Decrease Level</button>
           </div>
           <div class="col-xs-12" style="margin-top:10px">
-            <button ng-click="pauseGame()"><i class="fa fa-pause"></i></button>
+            <button ng-click="pauseGame()" style="text-align:center"><i class="fa fa-pause"> PAUSE</i></button>
+          </div>
+        </div>
+        <div class="col-xs-6" style="margin-left:130px;">
+            SAVED BLOCK
+            <div class="row"  ng-repeat="row in game.savedBlock.grid track by $index">
+              <div class="col-xs-3" ng-repeat="cell in row track by $index" 
+                    style="padding:0px;width:25px;height:25px;border-style:solid;border-color:black">
+                <div style="background-color:red;height:inherit;width:inherit;" ng-show="cell"></div>
+                <div style="background-color:blue;height:inherit;width:inherit;" ng-hide="cell"></div>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div ng-hide="gameLoop || game.isPaused" class="col-xs-3">
+        <button ng-click="startGame()" 
+                style="width:20%;text-align:center; margin-top:200px; background-color:green">
+          Start!
+        </button>
+      </div>
+      <div ng-show="game.isPaused" class="col-xs-3" style="width:50%height:50%;padding-top:200px;text-align:center;background-color:blue;margin-right:20px">
+          PAUSED
+      </div>
+      <div class="col-xs-6" style="width:40%"  ng-show="gameLoop && !game.isPaused">
+        <div class="row" ng-repeat="row in game.board track by $index" >
+          <div class="col-xs-1" ng-repeat="cell in row track by $index" 
+               style="padding:0px;border-style:solid;border-color:black;height:30px;width:30px">
+            <div  style="background-color:red;height:inherit;width:inherit" ng-show="isCellFull($index, $parent.$index)"></div>
+            <div  style="background-color:blue;height:inherit;width:inherit" ng-hide="isCellFull($index, $parent.$index)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-3">
+        <h3> Next Block</h3>
+        <div class="row">
+          <div ng-repeat="block in game.nextNewBlocks track by $index">
+            <div class="col-xs-12"  style="padding:2px" >
+              <div class="row" ng-repeat="gridRow in block.grid track by $index">
+                <div class="col-xs-3" ng-repeat="cell in gridRow track by $index"
+                      style="padding:0px;border-style:solid;border-color:black;height:25px;width:25px" >
+                  <div  style="background-color:red;height:inherit;width:inherit" ng-show="cell"></div>
+                  <div  style="background-color:blue;height:inherit;width:inherit" ng-hide="cell"></div>  
+                </div>    
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
 <!--       <button ng-click="moveBlock('left')">Left</button>
       <button ng-click="moveBlock('right')">Right</button>
@@ -222,19 +239,27 @@
         }
       
         var newBlock = function(){
-          $scope.currentBlock ={
-            'color':"",
-            'orient': 0,
-            'parentCell':{
-              'x': 5,
-              'y': 0
+          blockTypes = Object.keys(blocks);
+          nextNewBlockSettings = {
+            color:"",
+            orient: 0,
+            parentCell:{
+              x: 5,
+              y: 0
             }
           }
-          //generate random block
-          blockTypes = Object.keys(blocks);
-          randomBlockType = blockTypes[Math.floor(Math.random()*blockTypes.length)];
-          $scope.currentBlock['type'] = randomBlockType;
-          $scope.currentBlock['grid'] = angular.copy(blocks[randomBlockType][$scope.currentBlock.orient]);
+          while ($scope.game.nextNewBlocks.length < 5){
+            randomBlockType = blockTypes[Math.floor(Math.random()*blockTypes.length)];
+            $scope.game.nextNewBlocks.push({
+              type: randomBlockType,
+              grid: angular.copy(blocks[randomBlockType][nextNewBlockSettings.orient])
+            })
+          }
+          newBlockShape = $scope.game.nextNewBlocks.shift()
+          $scope.currentBlock = angular.extend(nextNewBlockSettings,newBlockShape);
+          console.log("newBlock end")
+          console.log($scope.currentBlock["type"])
+
         }
         $scope.saveBlock = function(){
           if (!$scope.game["savedBlock"]["isNew"]){
@@ -259,7 +284,7 @@
           $scope.game={
             isPaused: false,
             score: 0,
-            level: 0,
+            level: 1,
             savedBlock: {
               grid: [[false,false,false,false],
                      [false,false,false,false],
@@ -267,7 +292,8 @@
                      [false,false,false,false],],
               type: undefined,
               isNew: false
-            }
+            },
+            nextNewBlocks: []
           };
           $scope.game.board = new Array(20);
           for (var i = 0; i < 20; i++) {
@@ -286,28 +312,28 @@
             return; 
           }
           initGame();
-          $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+          $scope.gameLoop =  $interval($scope.incrementBlock, 1000/$scope.game.level);
         }
         $scope.pauseGame = function(){
-          if(angular.isDefined($scope.gameLoop)){
+          if(!$scope.game.isPaused){
             $scope.game.isPaused = true;
             $interval.cancel($scope.gameLoop);
           }else{
             $scope.game.isPaused = false;
-            $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+            $scope.gameLoop =  $interval($scope.incrementBlock,  1000/$scope.game.level);
           }
         }
 
         $scope.increaseLevel = function(){
           $scope.game.level++;
           $interval.cancel($scope.gameLoop);
-          $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+          $scope.gameLoop =  $interval($scope.incrementBlock, 1000/$scope.game.level);
         }
 
         $scope.decreaseLevel = function(){
           $scope.game.level--;
-          $interval.cancel($scope.gameLoop);
-          $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+          $interval.cancel($scope.gameLoop); 
+          $scope.gameLoop =  $interval($scope.incrementBlock,  1000/$scope.game.level);
         }
 
         $scope.moveBlock = function(direction){
@@ -335,6 +361,7 @@
           $scope.game.board.splice(yIndex, 1);
           $scope.game.board.unshift(makeEmptyRow());
         }
+
         $scope.rotateBlock = function(){
           if ($scope.currentBlock.orient < 3){
             var orient= $scope.currentBlock.orient+1;
@@ -420,7 +447,7 @@
                 if (_.every(row, function(cell){return cell;})){
                   $interval.cancel($scope.gameLoop);
                   setTimeout($scope.clearRow(yIndex),4000);
-                  $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));      
+                  $scope.gameLoop =  $interval($scope.incrementBlock,  1000/$scope.game.level);      
                   newPoints += 10; 
                 }
               });
