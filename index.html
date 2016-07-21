@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html ng-app="myApp" ng-controller="myCtrl">
+
+  <head>
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  </head>
+  <body ng-keydown="keyPress($event)" ng-swipe-left="moveBlock('left')" ng-swipe-right="moveBlock('right')" >
+  <div class="container">
+    <div class="row">
+      <div ng-hide="gameLoop || game.isPaused" class="col-xs-3">
+        <button ng-click="startGame()" 
+                style="width:160px;text-align:center; margin-top:200px; background-color:green">
+          Start!
+        </button>
+      </div>
+      <div ng-show="game.isPaused" class="col-xs-3" style="width:250px;height:500px;padding-top:200px;text-align:center;background-color:blue;margin-right:20px">
+          PAUSED
+      </div>
+      <div class="col-xs-8" style="width:300px"  ng-show="gameLoop && !game.isPaused">
+        <div class="row" ng-repeat="row in game.board track by $index" >
+          <div class="col-xs-1" ng-repeat="cell in row track by $index" 
+               style="padding:0px;border-style:solid;border-color:black;height:25px;width:25px">
+            <div  style="background-color:red;height:inherit;width:inherit" ng-show="isCellFull($index, $parent.$index)"></div>
+            <div  style="background-color:blue;height:inherit;width:inherit" ng-hide="isCellFull($index, $parent.$index)"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xs-4">
+        <h2> Level: {{game.level}} </h2>
+        <h2> Score: {{game.score}} </h2>
+        <div class="row">
+          <div class="col-xs-12" style="margin-left:15px;">
+            <div class="row"  ng-repeat="row in game.savedBlock.grid track by $index">
+              <div class="col-xs-3" ng-repeat="cell in row track by $index" 
+                    style="padding:0px;width:25px;height:25px;border-style:solid;border-color:black">
+                <div style="background-color:red;height:inherit;width:inherit;" ng-show="cell"></div>
+                <div style="background-color:blue;height:inherit;width:inherit;" ng-hide="cell"></div>
+              </div>
+            </div>
+          </div>
+          <span class="col-xs-12" 
+                style="margin-left:15px;margin-top:20px;border-style:solid;border-color:black;background-color:grey;width:230px">
+            <div>
+              Commands:
+            </div>
+            <div>
+             <i class="fa fa-arrow-left"></i> = move block Left
+            </div>
+            <div>
+             <i class="fa fa-arrow-down"></i> = move block Down
+            </div>
+            <div>
+             <i class="fa fa-arrow-right"></i> = move block Right
+            </div>
+            <div>
+              <i class="fa fa-arrow-up"></i> = Rotate
+            </div>
+            <div>
+              Space = Drop
+            </div>
+            <div>
+              C = Hold
+            </div>
+            <div>
+              P = pause
+            </div>
+          </span>
+          <div class="col-xs-12" style="margin-top:20px">
+            <button ng-click="increaseLevel()">Increase Level</button>
+            <button ng-click="decreaseLevel()">Decrease Level</button>
+          </div>
+          <div class="col-xs-12" style="margin-top:10px">
+            <button ng-click="pauseGame()"><i class="fa fa-pause"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!--       <button ng-click="moveBlock('left')">Left</button>
+      <button ng-click="moveBlock('right')">Right</button>
+      <button ng-click="incrementBlock()">Down</button>
+      <button ng-click="rotateBlock()">rotate</button> -->
+  </div>
+  <script>
+    var app = angular.module('myApp', []);
+    app.controller('myCtrl', ['$scope', '$interval', function($scope, $interval) {
+        var blocks = {
+          I:  {
+                0: [[false,true,false,false],
+                    [false,true,false,false],
+                    [false,true,false,false],
+                    [false,true,false,false]],
+                1: [[false,false,false,false],
+                    [true,true,true,true],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                2: [[false,false,true,false],
+                    [false,false,true,false],
+                    [false,false,true,false],
+                    [false,false,true,false]],
+                3: [[false,false,false,false],
+                    [false,false,false,false],
+                    [true,true,true,true],
+                    [false,false,false,false]],
+              },
+          T:  {
+                0: [[false,true,false,false],
+                    [true,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                1: [[false,true,false,false],
+                    [false,true,true,false],
+                    [false,true,false,false],
+                    [false,false,false,false]],
+                2: [[false,false,false,false],
+                    [true,true,true,false],
+                    [false,true,false,false],
+                    [false,false,false,false]],
+                3: [[false,true,false,false],
+                    [true,true,false,false],
+                    [false,true,false,false],
+                    [false,false,false,false]],
+              },
+          O:  {
+                0: [[false,true,true,false],
+                    [false,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                1: [[false,true,true,false],
+                    [false,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                2: [[false,true,true,false],
+                    [false,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                3: [[false,true,true,false],
+                    [false,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+              },
+          Z1: {
+                0: [[true,false,false,false],
+                    [true,true,false,false],
+                    [false,true,false,false],
+                    [false,false,false,false]],
+                1: [[false,true,true,false],
+                    [true,true,false,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                2: [[true,false,false,false],
+                    [true,true,false,false],
+                    [false,true,false,false],
+                    [false,false,false,false]],
+                3: [[false,true,true,false],
+                    [true,true,false,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+              },
+          Z2: {
+                0: [[false,true,false,false],
+                    [true,true,false,false],
+                    [true,false,false,false],
+                    [false,false,false,false]],
+                1: [[true,true,false,false],
+                    [false,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                2: [[false,true,false,false],
+                    [true,true,false,false],
+                    [true,false,false,false],
+                    [false,false,false,false]],
+                3: [[true,true,false,false],
+                    [false,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+              },
+          L1: {
+                0: [[false,false,true,false],
+                    [false,false,true,false],
+                    [false,true,true,false],
+                    [false,false,false,false]],
+                1: [[true,false,false,false],
+                    [true,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                2: [[true,true,false,false],
+                    [true,false,false,false],
+                    [true,false,false,false],
+                    [false,false,false,false]],
+                3: [[true,true,true,false],
+                    [false,false,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]]
+              },
+          L2: {
+                0: [[true,false,false,false],
+                    [true,false,false,false],
+                    [true,true,false,false],
+                    [false,false,false,false]],
+                1: [[true,true,true,false],
+                    [true,false,false,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+                2: [[false,true,true,false],
+                    [false,false,true,false],
+                    [false,false,true,false],
+                    [false,false,false,false]],
+                3: [[false,false,true,false],
+                    [true,true,true,false],
+                    [false,false,false,false],
+                    [false,false,false,false]],
+              },
+        }
+      
+        var newBlock = function(){
+          $scope.currentBlock ={
+            'color':"",
+            'orient': 0,
+            'parentCell':{
+              'x': 5,
+              'y': 0
+            }
+          }
+          //generate random block
+          blockTypes = Object.keys(blocks);
+          randomBlockType = blockTypes[Math.floor(Math.random()*blockTypes.length)];
+          $scope.currentBlock['type'] = randomBlockType;
+          $scope.currentBlock['grid'] = angular.copy(blocks[randomBlockType][$scope.currentBlock.orient]);
+        }
+        $scope.saveBlock = function(){
+          if (!$scope.game["savedBlock"]["isNew"]){
+            $interval.cancel($scope.gameLoop);
+            if (angular.isUndefined($scope.game["savedBlock"]["type"])){
+              $scope.game["savedBlock"]["type"] = $scope.currentBlock['type']
+              $scope.game["savedBlock"]["grid"] = angular.copy($scope.currentBlock['grid']);
+              newBlock();
+            } else {
+              var tempBlock = angular.copy($scope.game["savedBlock"]);
+              $scope.game["savedBlock"]["type"] = $scope.currentBlock['type'];
+              $scope.game["savedBlock"]["grid"] = angular.copy($scope.currentBlock['grid']);  
+              $scope.currentBlock['type'] = tempBlock["type"];
+              $scope.currentBlock['grid'] = tempBlock["grid"];
+            }
+            $scope.game["savedBlock"]["isNew"] = true;
+            $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+          }
+        }
+
+        var initGame = function(){
+          $scope.game={
+            isPaused: false,
+            score: 0,
+            level: 0,
+            savedBlock: {
+              grid: [[false,false,false,false],
+                     [false,false,false,false],
+                     [false,false,false,false],
+                     [false,false,false,false],],
+              type: undefined,
+              isNew: false
+            }
+          };
+          $scope.game.board = new Array(20);
+          for (var i = 0; i < 20; i++) {
+            $scope.game.board[i] = new Array(10);
+            for (var j = 0; j < 10; j++) {
+              $scope.game.board[i][j] = false;
+            }
+          };
+          newBlock();
+        }
+
+        initGame();
+
+        $scope.startGame = function(){
+          if(angular.isDefined($scope.gameLoop)){
+            return; 
+          }
+          initGame();
+          $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+        }
+        $scope.pauseGame = function(){
+          if(angular.isDefined($scope.gameLoop)){
+            $scope.game.isPaused = true;
+            $interval.cancel($scope.gameLoop);
+          }else{
+            $scope.game.isPaused = false;
+            $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+          }
+        }
+
+        $scope.increaseLevel = function(){
+          $scope.game.level++;
+          $interval.cancel($scope.gameLoop);
+          $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+        }
+
+        $scope.decreaseLevel = function(){
+          $scope.game.level--;
+          $interval.cancel($scope.gameLoop);
+          $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
+        }
+
+        $scope.moveBlock = function(direction){
+          if (direction == "left" && nextBlockValid('left')){
+            $scope.currentBlock.parentCell.x--;
+          }else if (direction =="right" && nextBlockValid('right')){
+            $scope.currentBlock.parentCell.x++;
+          }
+        }
+
+        $scope.isCellFull=function(xCoord, yCoord){
+          if ($scope.game.board[yCoord][xCoord]){
+            return true;
+          }
+          if ($scope.currentBlock.parentCell.y <= yCoord && $scope.currentBlock.parentCell.y+3 >= yCoord){
+            var affectedRow = $scope.currentBlock.grid[yCoord-$scope.currentBlock.parentCell.y];
+            if ($scope.currentBlock.parentCell.x <= xCoord && $scope.currentBlock.parentCell.x+3 >= xCoord){
+              return affectedRow[xCoord-$scope.currentBlock.parentCell.x];
+            }
+          }
+          return false;
+        };
+
+        $scope.clearRow = function(yIndex){
+          $scope.game.board.splice(yIndex, 1);
+          $scope.game.board.unshift(makeEmptyRow());
+        }
+        $scope.rotateBlock = function(){
+          if ($scope.currentBlock.orient < 3){
+            var orient= $scope.currentBlock.orient+1;
+          }else{
+            var orient= 0;
+          }
+          var nextBlock = blocks[$scope.currentBlock.type][orient]
+          if (nextBlockValid('rotate',getBlockCoords(nextBlock))) {
+            $scope.currentBlock.orient = orient;
+            $scope.currentBlock.grid = nextBlock;
+          } 
+
+        }
+
+        function getBlockCoords(block){
+         var blockCoords = [];
+          block.forEach(function(row,yCoord){
+            row.forEach(function(cell,xCoord){
+              if(cell){
+                blockCoords.push({
+                  x: $scope.currentBlock.parentCell.x + xCoord,
+                  y: $scope.currentBlock.parentCell.y + yCoord});
+              }
+            });
+          });     
+          return blockCoords;
+        }
+
+        function nextBlockValid(direction, blockCoords){
+          if (!blockCoords){
+            var blockCoords = getBlockCoords($scope.currentBlock.grid);
+          }
+          if(direction == "down"){
+            return _.every(blockCoords,function(blockCoord){
+              return (blockCoord.y != 19 && !$scope.game.board[blockCoord.y + 1][blockCoord.x]) 
+            });
+          }else if (direction == "left"){
+             return _.every(blockCoords,function(blockCoord){
+              return (blockCoord.x != 0 && !$scope.game.board[blockCoord.y][blockCoord.x - 1])
+            });       
+          }else if (direction == "right"){//direction =="right"
+             return _.every(blockCoords,function(blockCoord){
+              return (blockCoord.x != 9 && !$scope.game.board[blockCoord.y][blockCoord.x + 1])
+            });         
+          }else { //from rotate, !!! bad functioning: blockCoord is NEXT block here instead of CURRENTBLOCK AS IN THE OTHER CASES
+            return _.every(blockCoords,function(blockCoord){
+              return (blockCoord.x != -1 && 
+                      blockCoord.x != 10 && 
+                      blockCoord.y != 20 && 
+                      !$scope.game.board[blockCoord.y][blockCoord.x]) 
+            });
+          }  
+        }
+        function makeEmptyRow(){
+          return [false,false,false,false,false,false,false,false,false,false];
+        }
+
+        $scope.dropBlock = function(){
+          $scope.game.isBlockDropping = true;
+          while(nextBlockValid("down")){
+            $scope.currentBlock.parentCell.y++;
+          }
+          setTimeout($scope.incrementBlock(), 100);
+        }
+
+        $scope.incrementBlock = function(){
+          if (nextBlockValid("down")){
+            $scope.currentBlock.parentCell.y++;
+          }else{
+            $scope.currentBlock.grid.forEach(function(row,yCoord){
+              row.forEach(function(cell,xCoord){
+                if(cell){
+                  $scope.game.board[$scope.currentBlock.parentCell.y + yCoord][ $scope.currentBlock.parentCell.x + xCoord] = true;
+                }
+              });
+            });
+            if($scope.currentBlock.parentCell.y < 1){
+              $interval.cancel($scope.gameLoop);
+              $scope.gameLoop = undefined;
+            }else{
+              var newPoints = 0
+              $scope.game.board.forEach(function(row, yIndex){
+                if (_.every(row, function(cell){return cell;})){
+                  $interval.cancel($scope.gameLoop);
+                  setTimeout($scope.clearRow(yIndex),4000);
+                  $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));      
+                  newPoints += 10; 
+                }
+              });
+              if ((($scope.game.score % 100) + newPoints) >= 100 ){
+                $scope.increaseLevel();
+              }
+              $scope.game.score += newPoints;
+              newBlock();
+            }
+            $scope.game["savedBlock"]["isNew"] = false;
+            $scope.game.isBlockDropping = false;
+          }
+        };
+
+        $scope.keyPress = function (event) {
+          //allow game start with space if not started
+          if (event.code === "Space" && angular.isUndefined($scope.gameLoop)){
+            $scope.startGame();
+          }
+          if( $scope.game.isBlockDropping || angular.isUndefined($scope.gameLoop)){
+            return;
+          }
+          // var code = e.keyCode ? e.keyCode : e.which;
+          if (event.code === "ArrowLeft") { //up key
+            $scope.moveBlock('left')
+          } else if (event.code === "ArrowUp") { //up key
+            $scope.rotateBlock()
+          } else if (event.code === "ArrowRight") { //right key
+            $scope.moveBlock('right')
+          } else if (event.code === "ArrowDown") { //down key
+            $scope.incrementBlock()
+          } else if (event.code ==="KeyC"){
+            $scope.saveBlock();
+          } else if (event.code === "Space"){
+            $scope.dropBlock();
+          } else if (event.code === "KeyP"){
+            $scope.pauseGame();
+          }
+        };
+    }]);
+  </script>
+
+  </body>
+</html>
+
