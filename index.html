@@ -58,8 +58,8 @@
             <div class="row"  ng-repeat="row in game.savedBlock.grid track by $index">
               <div class="col-xs-3" ng-repeat="cell in row track by $index" 
                     style="padding:0px;width:25px;height:25px;border-style:solid;border-color:black">
-                <div style="background-color:red;height:inherit;width:inherit;" ng-show="cell"></div>
-                <div style="background-color:blue;height:inherit;width:inherit;" ng-hide="cell"></div>
+                <div style="height:inherit;width:inherit;" ng-show="cell" ng-style="{'background-color': game.savedBlock.color}"></div>
+                <div style="background-color:grey;height:inherit;width:inherit;" ng-hide="cell"></div>
               </div>
             </div>
         </div>
@@ -77,9 +77,9 @@
         <div class="row" ng-repeat="row in game.board track by $index" >
           <div class="col-xs-1" ng-repeat="cell in row track by $index" 
                style="padding:0px;border-style:solid;border-color:black;height:30px;width:30px">
-            <div  style="background-color:red;height:inherit;width:inherit" ng-show="isCellFull($index, $parent.$index)"></div>
-            <div  style="background-color:blue;height:inherit;width:inherit" ng-hide="isCellFull($index, $parent.$index)"></div>
-          </div>
+            <div  style="height:inherit;width:inherit" ng-style="getCellColor($index, $parent.$index)"></div>
+<!--             <div  style="background-color:blue;height:inherit;width:inherit" ng-hide="isCellFull($index, $parent.$index)"></div>
+ -->          </div>
         </div>
       </div>
       <div class="col-xs-3">
@@ -90,8 +90,8 @@
               <div class="row" ng-repeat="gridRow in block.grid track by $index">
                 <div class="col-xs-3" ng-repeat="cell in gridRow track by $index"
                       style="padding:0px;border-style:solid;border-color:black;height:25px;width:25px" >
-                  <div  style="background-color:red;height:inherit;width:inherit" ng-show="cell"></div>
-                  <div  style="background-color:blue;height:inherit;width:inherit" ng-hide="cell"></div>  
+                  <div  style="height:inherit;width:inherit" ng-show="cell" ng-style="{'background-color': block.color}"></div>
+                  <div  style="background-color:grey;height:inherit;width:inherit" ng-hide="cell"></div>  
                 </div>    
               </div>
             </div>
@@ -238,42 +238,66 @@
               },
         }
       
+        function getBlockTypeColor (blockType){
+          switch(blockType){
+            case "I":
+              return "aqua";
+            case "T": 
+              return "purple";
+            case "O":
+              return "yellow";
+            case "Z1": 
+              return "green";
+            case "Z2":
+              return "red";
+            case "L1":
+              return "orange";
+            case "L2":
+              return "blue";
+            default:
+              return "grey";
+          }
+        }
         var newBlock = function(){
           blockTypes = Object.keys(blocks);
           nextNewBlockSettings = {
-            color:"",
             orient: 0,
             parentCell:{
               x: 5,
               y: 0
             }
           }
-          while ($scope.game.nextNewBlocks.length < 5){
+          while ($scope.game.nextNewBlocks.length < 6){
             randomBlockType = blockTypes[Math.floor(Math.random()*blockTypes.length)];
             $scope.game.nextNewBlocks.push({
               type: randomBlockType,
-              grid: angular.copy(blocks[randomBlockType][nextNewBlockSettings.orient])
+              grid: angular.copy(blocks[randomBlockType][nextNewBlockSettings.orient]),
+              color: getBlockTypeColor (randomBlockType)
             })
           }
           newBlockShape = $scope.game.nextNewBlocks.shift()
           $scope.currentBlock = angular.extend(nextNewBlockSettings,newBlockShape);
-          console.log("newBlock end")
-          console.log($scope.currentBlock["type"])
-
         }
         $scope.saveBlock = function(){
           if (!$scope.game["savedBlock"]["isNew"]){
             $interval.cancel($scope.gameLoop);
             if (angular.isUndefined($scope.game["savedBlock"]["type"])){
-              $scope.game["savedBlock"]["type"] = $scope.currentBlock['type']
-              $scope.game["savedBlock"]["grid"] = angular.copy($scope.currentBlock['grid']);
+              $scope.game.savedBlock = {
+                color: angular.copy($scope.currentBlock["color"]),
+                type: angular.copy($scope.currentBlock['type']),
+                grid: angular.copy($scope.currentBlock['grid'])
+              }
               newBlock();
             } else {
               var tempBlock = angular.copy($scope.game["savedBlock"]);
-              $scope.game["savedBlock"]["type"] = $scope.currentBlock['type'];
-              $scope.game["savedBlock"]["grid"] = angular.copy($scope.currentBlock['grid']);  
+              $scope.game.savedBlock = {
+                color: angular.copy($scope.currentBlock["color"]),
+                type: angular.copy($scope.currentBlock['type']),
+                grid: angular.copy($scope.currentBlock['grid'])
+              }
               $scope.currentBlock['type'] = tempBlock["type"];
               $scope.currentBlock['grid'] = tempBlock["grid"];
+              $scope.currentBlock['color'] = tempBlock["color"];
             }
             $scope.game["savedBlock"]["isNew"] = true;
             $scope.gameLoop =  $interval($scope.incrementBlock, 1000 - ($scope.game.level*50));
@@ -307,6 +331,31 @@
 
         initGame();
 
+
+        $scope.getCellColor = function(xCoord,yCoord){
+          if ($scope.game.board[yCoord][xCoord]){
+            return {'background-color': $scope.game.board[yCoord][xCoord]};
+          }
+          if ($scope.currentBlock.parentCell.y <= yCoord && $scope.currentBlock.parentCell.y+3 >= yCoord){
+            var affectedRow = $scope.currentBlock.grid[yCoord-$scope.currentBlock.parentCell.y];
+            if ($scope.currentBlock.parentCell.x <= xCoord && $scope.currentBlock.parentCell.x+3 >= xCoord){
+              if (affectedRow[xCoord-$scope.currentBlock.parentCell.x]){
+                return {'background-color': $scope.currentBlock.color};
+              } else {
+                return {'background-color': "grey"}
+              }
+            }
+          }else if ($scope.predictedBlock.parentCell.y <= yCoord && $scope.predictedBlock.parentCell.y+3 >= yCoord){
+            var affectedRow = $scope.predictedBlock.grid[yCoord-$scope.predictedBlock.parentCell.y];
+            if ($scope.predictedBlock.parentCell.x <= xCoord && $scope.predictedBlock.parentCell.x+3 >= xCoord){
+              if (affectedRow[xCoord-$scope.predictedBlock.parentCell.x]){
+                return {'background-color': "black"};
+              } else {
+                return {'background-color': "grey"}
+              }
+            }
+          return {'background-color': "grey"}
+        }
         $scope.startGame = function(){
           if(angular.isDefined($scope.gameLoop)){
             return; 
@@ -431,10 +480,12 @@
           if (nextBlockValid("down")){
             $scope.currentBlock.parentCell.y++;
           }else{
+            // var blockLandedSound =  new Audio("http://www.freesfx.co.uk/rx2/mp3s/6/17939_1464203358.mp3");
+            // blockLandedSound.play()
             $scope.currentBlock.grid.forEach(function(row,yCoord){
               row.forEach(function(cell,xCoord){
                 if(cell){
-                  $scope.game.board[$scope.currentBlock.parentCell.y + yCoord][ $scope.currentBlock.parentCell.x + xCoord] = true;
+                  $scope.game.board[$scope.currentBlock.parentCell.y + yCoord][ $scope.currentBlock.parentCell.x + xCoord] = $scope.currentBlock.color;
                 }
               });
             });
@@ -445,6 +496,8 @@
               var newPoints = 0
               $scope.game.board.forEach(function(row, yIndex){
                 if (_.every(row, function(cell){return cell;})){
+          var blockClearSound = new Audio("http://www.freesfx.co.uk/rx2/mp3s/6/18625_1464805220.mp3");
+                  blockClearSound.play()
                   $interval.cancel($scope.gameLoop);
                   setTimeout($scope.clearRow(yIndex),4000);
                   $scope.gameLoop =  $interval($scope.incrementBlock,  1000/$scope.game.level);      
@@ -464,8 +517,10 @@
 
         $scope.keyPress = function (event) {
           //allow game start with space if not started
+          // blockLandedSound.load()
           if (event.code === "Space" && angular.isUndefined($scope.gameLoop)){
             $scope.startGame();
+            return;
           }
           if( $scope.game.isBlockDropping || angular.isUndefined($scope.gameLoop)){
             return;
