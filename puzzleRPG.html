@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html ng-app="myApp" ng-controller="BlockRPG">
+
+  <head>
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="http://test.roywkc.com/main.js"></script>
+    <script src="http://test.roywkc.com/controller.blockRPG.js"></script>
+  </head>
+  <body ng-keydown="keyPress($event)">
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-3">
+        <h2> Level: {{game.level}} </h2>
+        <h2> Score: {{game.score}} </h2>
+        <div class="row">
+          <span class="col-xs-12" 
+                style="margin-left:15px;margin-top:20px;border-style:solid;border-color:black;background-color:grey;width:230px">
+            <div>
+              Commands:
+            </div>
+            <div>
+             <i class="fa fa-arrow-left"></i> = move Left
+            </div>
+            <div>
+             <i class="fa fa-arrow-down"></i> = move Down
+            </div>
+            <div>
+             <i class="fa fa-arrow-right"></i> = move Right
+            </div>
+            <div>
+              <i class="fa fa-arrow-up"></i> = move Right
+            </div>
+          </span>
+        </div>
+      </div>
+      <div class="col-xs-9">
+        <div class="row"  ng-repeat="row in game.board track by $index">
+          <div class="col-xs-3" ng-repeat="cell in row track by $index" 
+              style="padding:0px;width:50px;height:50px;border-style:solid;border-color:black">
+            <div style="background-color':green;height:inherit;width:inherit;" ng-show="cell.boardImg == 'tree'">
+            </div>
+            <div style="background-color:brown;height:inherit;width:inherit;" ng-show="cell.boardImg == 'dirt'">
+
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+
+  </body>
+</html>
+
