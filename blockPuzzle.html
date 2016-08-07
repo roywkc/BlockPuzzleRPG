@@ -1,0 +1,94 @@
+<!-- <body ng-controller="BlockPuzzle">-->
+ <div class="container"  ng-keydown="keyPress($event)">
+  <div class="row">
+    <div class="col-xs-3">
+      <h2> Level: {{game.level}} </h2>
+      <h2> Score: {{game.score}} </h2>
+      <div class="row">
+        <span class="col-xs-12" 
+              style="margin-left:15px;margin-top:20px;border-style:solid;border-color:black;background-color:grey;width:230px">
+          <div>
+            Commands:
+          </div>
+          <div>
+           <i class="fa fa-arrow-left"></i> = move block Left
+          </div>
+          <div>
+           <i class="fa fa-arrow-down"></i> = move block Down
+          </div>
+          <div>
+           <i class="fa fa-arrow-right"></i> = move block Right
+          </div>
+          <div>
+            <i class="fa fa-arrow-up"></i> = Rotate
+          </div>
+          <div>
+            Space = Drop
+          </div>
+          <div>
+            C = Hold
+          </div>
+          <div>
+            P = pause
+          </div>
+        </span>
+        <div class="col-xs-12" style="margin-top:20px">
+          <button ng-click="increaseLevel()">Increase Level</button>
+          <button ng-click="decreaseLevel()">Decrease Level</button>
+        </div>
+        <div class="col-xs-12" style="margin-top:10px">
+          <button ng-click="pauseGame()" style="text-align:center"><i class="fa fa-pause"> PAUSE</i></button>
+        </div>
+      </div>
+      <div class="col-xs-6" style="margin-left:130px;">
+          SAVED BLOCK
+          <div class="row"  ng-repeat="row in game.savedBlock.grid track by $index">
+            <div class="col-xs-3" ng-repeat="cell in row track by $index" 
+                  style="padding:0px;width:25px;height:25px;border-style:solid;border-color:black">
+              <div style="height:inherit;width:inherit;" ng-show="cell" ng-style="{'background-color': game.savedBlock.color}"></div>
+              <div style="background-color:grey;height:inherit;width:inherit;" ng-hide="cell"></div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div ng-hide="gameLoop || game.isPaused" class="col-xs-3">
+      <button ng-click="startGame()" 
+              style="width:20%;text-align:center; margin-top:200px; background-color:green">
+        Start!
+      </button>
+    </div>
+    <div ng-show="game.isPaused" class="col-xs-3" style="width:50%height:50%;padding-top:200px;text-align:center;background-color:blue;margin-right:20px">
+        PAUSED
+    </div>
+    <div class="col-xs-6" style="width:40%"  ng-show="gameLoop && !game.isPaused">
+      <div class="row" ng-repeat="row in game.board track by $index" >
+        <div class="col-xs-1" ng-repeat="cell in row track by $index" 
+             style="padding:0px;border-style:solid;border-color:black;height:30px;width:30px">
+          <div  style="height:inherit;width:inherit" ng-style="getCellColor($index, $parent.$index)"></div>
+          </div>
+      </div>
+    </div>
+    <div class="col-xs-3">
+      <h3> Next Block</h3>
+      <div class="row">
+        <div ng-repeat="block in game.nextNewBlocks track by $index">
+          <div class="col-xs-12"  style="padding:2px" >
+            <div class="row" ng-repeat="gridRow in block.grid track by $index">
+              <div class="col-xs-3" ng-repeat="cell in gridRow track by $index"
+                    style="padding:0px;border-style:solid;border-color:black;height:25px;width:25px" >
+                <div  style="height:inherit;width:inherit" ng-show="cell" ng-style="{'background-color': block.color}"></div>
+                <div  style="background-color:grey;height:inherit;width:inherit" ng-hide="cell"></div>  
+              </div>    
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button ng-click="moveBlock('left')">Left</button>
+<button ng-click="moveBlock('right')">Right</button>
+<button ng-click="incrementBlock()">Down</button>
+<button ng-click="rotateBlock()">rotate</button>
+<!-- </body> -->

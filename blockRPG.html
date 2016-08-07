@@ -1,0 +1,39 @@
+<div class="container">
+  <div class="row">
+    <div class="col-xs-3">
+      <h2> Level: {{game.level}} </h2>
+      <h2> Score: {{game.score}} </h2>
+      <div class="row">
+        <span class="col-xs-12" 
+              style="margin-left:15px;margin-top:20px;border-style:solid;border-color:black;background-color:grey;width:230px">
+          <div>
+            Commands:
+          </div>
+          <div>
+           <i class="fa fa-arrow-left"></i> = move Left
+          </div>
+          <div>
+           <i class="fa fa-arrow-down"></i> = move Down
+          </div>
+          <div>
+           <i class="fa fa-arrow-right"></i> = move Right
+          </div>
+          <div>
+            <i class="fa fa-arrow-up"></i> = move Right
+          </div>
+        </span>
+      </div>
+    </div>
+    <div class="col-xs-9"> 
+      <div class="row"  ng-repeat="row in game.board track by $index">
+        <div class="col-xs-3" ng-repeat="cell in row track by $index" 
+            style="padding:0px;width:50px;height:50px;border-style:solid;border-color:black">
+          <div style="background-color':green;height:inherit;width:inherit;" ng-show="cell.boardImg == 'tree'">
+          </div>
+          <div style="background-color:brown;height:inherit;width:inherit;" ng-show="cell.boardImg == 'dirt'">
+            <img ng-show="game.hero.pos.x == $index && game.hero.pos.y == $parent.$index" src="http://orig10.deviantart.net/7733/f/2009/025/3/9/link_icon_50x50_by_hiahia2323.gif">
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
