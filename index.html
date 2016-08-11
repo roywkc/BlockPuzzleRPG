@@ -16,9 +16,8 @@
     <script src="/directive.blockRPG.js"></script>
   </head>
   <body ng-keydown="keyPress($event)">
-  <block-rpg ng-if="!runningPuzzle"></block-rpg>
-  <a ng-click="runningPuzzle = !runningPuzzle">START TETRIS</a>
-  <block-puzzle ng-if="runningPuzzle"></block-puzzle>
+  <block-rpg ng-if="!isPuzzleRunning" style="width:900px"></block-rpg>
+  <block-puzzle ng-if="isPuzzleRunning" style="width:900px"></block-puzzle>
   </body>
 </html>
 

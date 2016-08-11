@@ -1,12 +1,11 @@
 app.directive('blockPuzzle', 
   ['$interval',
-  function($interval){
+  '$rootScope',
+  function($interval, $rootScope){
       return {
         templateUrl: "/blockPuzzle.html",
         restrict: 'E',
         link:function(scope, element, attrs, ctrls){
-
-  console.log ("hello!")
     var blocks = {
       I:  {
             0: [[false,true,false,false],
@@ -204,6 +203,56 @@ app.directive('blockPuzzle',
       updatePredictedBlock();
     }
 
+    var initBoard = function(){
+      scope.game.board = new Array(20);
+      if ($rootScope.boardType == "gaping_hole"){
+        for (var i = 0; i < 20; i++) {
+          scope.game.board[i] = new Array(10);
+          if (i < 10){
+            for (var j = 0; j < 10; j++) {
+              scope.game.board[i][j] = false;
+            }
+          }else{
+            for (var j = 0; j < 10; j++) {
+              if (j < 3 || j > 6){
+                scope.game.board[i][j] = true;
+              }else{
+                scope.game.board[i][j] = false;
+              }
+            }
+          }
+        };
+        scope.game.objectiveLines = 10;
+      }else if ($rootScope.boardType == "cascade"){
+        for (var i = 0; i < 20; i++) {
+          scope.game.board[i] = new Array(10);
+          if (i < 10){
+            for (var j = 0; j < 10; j++) {
+              scope.game.board[i][j] = false;
+            }
+          }else{
+            for (var j = 0; j < 10; j++) {
+              if (j%2 == 0){
+                console.log("shiza")
+                scope.game.board[i][j] = true;
+              }else{
+                scope.game.board[i][j] = false;
+              }
+            }
+          }
+        };
+        scope.game.objectiveLines = 10;
+      }else{
+        for (var i = 0; i < 20; i++) {
+          scope.game.board[i] = new Array(10);
+          for (var j = 0; j < 10; j++) {
+            scope.game.board[i][j] = false;
+          }
+        };
+        scope.game.objectiveLines = -1;
+      }
+    }
+
     var initGame = function(){
       scope.game={
         isPaused: false,
@@ -219,13 +268,7 @@ app.directive('blockPuzzle',
         },
         nextNewBlocks: []
       };
-      scope.game.board = new Array(20);
-      for (var i = 0; i < 20; i++) {
-        scope.game.board[i] = new Array(10);
-        for (var j = 0; j < 10; j++) {
-          scope.game.board[i][j] = false;
-        }
-      };
+      initBoard();
       newBlock();
     }
 
@@ -380,9 +423,8 @@ app.directive('blockPuzzle',
 
     scope.dropBlock = function(){
       scope.game.isBlockDropping = true;
-      while(nextBlockValid("down")){
-        setTimeout(scope.incrementBlock(), 100);
-      }
+      scope.currentBlock.parentCell = scope.predictedBlock.parentCell;
+      scope.incrementBlock();
     };
     scope.incrementBlock = function(){
       if (nextBlockValid("down")){
@@ -400,7 +442,7 @@ app.directive('blockPuzzle',
         if(scope.currentBlock.parentCell.y < 1){
           $interval.cancel(scope.gameLoop);
           scope.gameLoop = undefined;
-          scope.isPuzzleRunning = false;
+          $rootScope.isPuzzleRunning = false;
         }else{
           var newPoints = 0
           scope.game.board.forEach(function(row, yIndex){
@@ -409,6 +451,13 @@ app.directive('blockPuzzle',
               // blockClearSound.play()
               $interval.cancel(scope.gameLoop);
               setTimeout(scope.clearRow(yIndex),1000);
+              if (yIndex >= (20 - scope.game.objectiveLines) ){
+               scope.game.objectiveLines -=1;
+              } 
+              if (scope.game.objectiveLines == 0){
+                scope.gameLoop = undefined;
+                $rootScope.isPuzzleRunning = false;
+              }
               scope.gameLoop =  $interval(scope.incrementBlock,  1000/scope.game.level);      
               newPoints += 10; 
             }
@@ -425,10 +474,7 @@ app.directive('blockPuzzle',
     };
 
     scope.$on("keyPress",function(event, args){
-      console.log(args.key);
       //allow game start with space if not started
-      // blockLandedSound.load()
-      
       if (args.key === "Space" && angular.isUndefined(scope.gameLoop)){
         scope.startGame();
         return;
