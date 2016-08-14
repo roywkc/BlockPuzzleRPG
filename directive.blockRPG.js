@@ -6,7 +6,6 @@ app.directive('blockRpg',
         templateUrl: "/blockRPG.html",
         restrict: 'E',
         link:function(scope, element, attrs, ctrls){
-          $rootScope.boardType = null;
           var newGameBoard = function(){
             var gameBoard = []
             var treeImg = "http://www.polyvore.com/cgi/img-thing?.out=jpg&size=l&tid=980698"
@@ -104,11 +103,9 @@ app.directive('blockRpg',
             if (scope.game.hero.pos.x == 1 && scope.game.hero.pos.y == 1 ){
               $rootScope.isPuzzleRunning = true;
             }else if (scope.game.hero.pos.x == 8 && scope.game.hero.pos.y == 8 ){
-              $rootScope.boardType = "gaping_hole";
-              $rootScope.isPuzzleRunning = true;
+              scope.$emit("puzzleStart", {boardType: "gaping_hole"})
             }else if (scope.game.hero.pos.x == 8 && scope.game.hero.pos.y == 1 ){
-              $rootScope.boardType = "cascade";
-              $rootScope.isPuzzleRunning = true;
+              scope.$emit("puzzleStart", {boardType: "cascade"})
             }
           }
         }}}])

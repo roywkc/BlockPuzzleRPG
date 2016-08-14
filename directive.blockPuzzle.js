@@ -442,7 +442,7 @@ app.directive('blockPuzzle',
         if(scope.currentBlock.parentCell.y < 1){
           $interval.cancel(scope.gameLoop);
           scope.gameLoop = undefined;
-          $rootScope.isPuzzleRunning = false;
+          scope.$emit("puzzleEnd",{result:"fail"});
         }else{
           var newPoints = 0
           scope.game.board.forEach(function(row, yIndex){
@@ -456,7 +456,7 @@ app.directive('blockPuzzle',
               } 
               if (scope.game.objectiveLines == 0){
                 scope.gameLoop = undefined;
-                $rootScope.isPuzzleRunning = false;
+                scope.$emit("puzzleEnd",{result:"win"});
               }
               scope.gameLoop =  $interval(scope.incrementBlock,  1000/scope.game.level);      
               newPoints += 10; 

@@ -5,4 +5,13 @@ app.controller('BlockRPG', ['$scope', '$interval','$rootScope', function($scope,
     // var code = e.keyCode ? e.keyCode : e.which;
     $scope.$broadcast('keyPress', {key: event.code});
   };
+
+  $scope.$on("puzzleEnd",function(event,args){
+    $rootScope.boardType = null;
+    $rootScope.isPuzzleRunning = false;
+  });
+  $scope.$on("puzzleStart",function(event,args){
+    $rootScope.boardType = args.boardType;
+    $rootScope.isPuzzleRunning = true;
+  });
 }]);
