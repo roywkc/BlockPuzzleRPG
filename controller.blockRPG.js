@@ -6,7 +6,15 @@ app.controller('BlockRPG', ['$scope', '$interval','$rootScope', function($scope,
     $scope.$broadcast('keyPress', {key: event.code});
   };
 
+  $rootScope.puzzleState = {
+    "cascade": false,
+    "gaping_hole": false,
+  };
+
   $scope.$on("puzzleEnd",function(event,args){
+    if (args.result == "win"){
+      $rootScope.puzzleState[$rootScope.boardType] = true;
+    };
     $rootScope.boardType = null;
     $rootScope.isPuzzleRunning = false;
   });

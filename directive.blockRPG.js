@@ -9,64 +9,55 @@ app.directive('blockRpg',
           var newGameBoard = function(){
             var gameBoard = []
             var treeImg = "http://www.polyvore.com/cgi/img-thing?.out=jpg&size=l&tid=980698"
-            for (i=0; i<10; i++){
-              if (i == 0 || i == 9){
-                row = _.range(10).map(function () { return { boardImg: "tree"} })
-              }else if (i == 1){
-                row = _.range(10).map(
-                  function (xCoord) { 
-                    if(xCoord == 0|| xCoord == 9){
-                      return { boardImg: "tree"} 
-                    } else if (xCoord == 1 || xCoord == 8){
-                      return { boardImg: "block"}
-                    }else{
-                      return { boardImg: "dirt"}
-                    }
-                  });
-              }else if (i == 8){
-                row = _.range(10).map(
-                  function (xCoord) { 
-                    if(xCoord == 0|| xCoord == 9){
-                      return { boardImg: "tree"} 
-                    } else if (xCoord == 8){
-                      return { boardImg: "block"}
-                    }else{
-                      return { boardImg: "dirt"}
-                    }
-                  });
-              }else if (i % 3 == 0){
-                row = _.range(10).map(
-                  function (xCoord) { 
-                    if(xCoord == 0|| xCoord == 9 || (xCoord%3==0) ){
-                      return { boardImg: "tree"} 
-                    } else {
-                      return { boardImg: "dirt"}
-                    }
-                  });
-              }else{
-                row = _.range(10).map(
-                  function (xCoord) { 
-                    if(xCoord == 0|| xCoord == 9){
-                      return { boardImg: "tree"} 
-                    } else {
-                      return { boardImg: "dirt"}
-                    }
-                  });
-              }
+
+            var template = ["ttttGttttt",
+                        "tddddddddt",
+                        "tddddddddt",
+                        "tddtddtddt",
+                        "tdddPddddt",
+                        "tddddddddt",
+                        "tddtddtddt",
+                        "tddddddddt",
+                        "tddddddddt",
+                        "tttttttttt"]
+
+            template.forEach(function(templateRow){
+              var row = templateRow.split('');
+              row = _.map(row, function(cell){
+                if (cell == "t"){
+                  return { boardImg: "tree"} 
+                } else if (cell == "G"){
+                  if( $rootScope.puzzleState[$rootScope.currentRoom]){
+                    return { boardImg: "gate"}
+                  } else {
+                    return { boardImg: "tree"} 
+                  }
+                } else if (cell == "P"){
+                  if( $rootScope.puzzleState[$rootScope.currentRoom]){
+                    return { boardImg: "clearedPuzzle"}
+                  }else{
+                    return { boardImg: "puzzle"}
+                  }            
+                }else {
+                  return { boardImg: "dirt"}
+                }
+              });
               gameBoard = gameBoard.concat([row]);
-            }
+             });
             return gameBoard;
           }
 
-          scope.game = {
-            hero: {
-              pos: {x:5, y:5},
-              avatarImg: "hero",
-              blocks:[]
-            },
-            board: newGameBoard()
-          }
-
+          var initGame = function(){
+            scope.game = {
+              hero: {
+                pos: {x:5, y:8},
+                avatarImg: "hero",
+                blocks:[]
+              },
+              board: newGameBoard()
+            }
+            }
+          initGame();
           scope.$on("keyPress",function(event, args){
             if ($rootScope.isPuzzleRunning){
               return;
@@ -100,12 +91,14 @@ app.directive('blockRpg',
             } else if (direction == "down" && canHeroMove(0, 1)) { //down key
               scope.game.hero.pos.y = scope.game.hero.pos.y +1;
             }
-            if (scope.game.hero.pos.x == 1 && scope.game.hero.pos.y == 1 ){
-              $rootScope.isPuzzleRunning = true;
-            }else if (scope.game.hero.pos.x == 8 && scope.game.hero.pos.y == 8 ){
-              scope.$emit("puzzleStart", {boardType: "gaping_hole"})
-            }else if (scope.game.hero.pos.x == 8 && scope.game.hero.pos.y == 1 ){
-              scope.$emit("puzzleStart", {boardType: "cascade"})
+            if (scope.game.hero.pos.x == 4 && scope.game.hero.pos.y == 4 ){
+              scope.$emit("puzzleStart", {boardType: $rootScope.currentRoom});
+            }
+            if (scope.game.hero.pos.x == 4 && scope.game.hero.pos.y == 0 ){
+              var rooms = ["gaping_hole","cascade","tetris"]
+              var roomIndex = rooms.indexOf($rootScope.currentRoom);
+              $rootScope.currentRoom = [rooms[roomIndex + 1]]
+              initGame();
             }
           }
         }}}])
